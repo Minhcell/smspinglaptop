@@ -103,11 +103,30 @@ public partial class frmMain : Form
 		}
 	}
 
+	// SMSC mặc định theo từng nhà mạng Việt Nam (dùng khi SIM chưa có sẵn SMSC được lưu)
+	private static readonly Dictionary<string, string> SmscByNetwork = new Dictionary<string, string>
+	{
+		["01"] = "+84900000023", // Mobifone
+		["02"] = "+8491020005",  // Vinaphone
+		["04"] = "+84980200030", // Viettel
+	};
+
+	private static string ExtractCurrentSmsc(string data)
+	{
+		var m = System.Text.RegularExpressions.Regex.Match(data, "\\+CSCA:\\s*\"([^\"]*)\"");
+		return m.Success ? m.Groups[1].Value : "";
+	}
+
+	private static string DetectSmscByNetwork(string data)
+	{
+		var m = System.Text.RegularExpressions.Regex.Match(data, "452-0(\\d)");
+		if (m.Success && SmscByNetwork.TryGetValue(m.Groups[1].Value.PadLeft(2, '0'), out string smsc))
+			return smsc;
+		return null;
+	}
+
 	private void CheckImei()
 	{
-		_flagCheckImei = false;
-		// Không dựa vào việc modem có echo lại lệnh hay không (ATE0/ATE1),
-		// mà tìm trực tiếp dãy 15 chữ số liên tiếp (đúng độ dài chuẩn IMEI) trong dữ liệu nhận về.
 		var match = System.Text.RegularExpressions.Regex.Match(_myImei, @"\d{15}");
 		if (match.Success)
 		{
@@ -117,6 +136,7 @@ public partial class frmMain : Form
 				MessageBox.Show("Thiết bị của bạn chưa được đăng ký sử dụng với tác giả.\r\nVui lòng liên hệ tác giả!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				SerialPort1.Close();
 				SetConnected(false);
+				_flagCheckImei = false;
 				return;
 			}
 		}
@@ -125,17 +145,45 @@ public partial class frmMain : Form
 			MessageBox.Show("Cổng COM chưa nhận được thiết bị!\r\nThử kết nối lại.\r\n\r\n--- Dữ liệu đã nhận được ---\r\n" + _myImei, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			SerialPort1.Close();
 			SetConnected(false);
+			_flagCheckImei = false;
 			return;
 		}
 
 		SerialPort1.Write("AT+CNMP=38\r\n");
-		System.Threading.Thread.Sleep(200);
+		System.Threading.Thread.Sleep(300);
+		Application.DoEvents();
+
+		// Kiểm tra SIM đã có sẵn SMSC chưa (mỗi SIM nhà mạng thường tự lưu sẵn số này)
+		SerialPort1.Write("AT+CSCA?\r\n");
+		System.Threading.Thread.Sleep(300);
+		Application.DoEvents();
+		string currentSmsc = ExtractCurrentSmsc(_myImei);
+
 		SerialPort1.Write("AT+CPSI?\r\n");
-		System.Threading.Thread.Sleep(200);
+		System.Threading.Thread.Sleep(500);
+		Application.DoEvents();
+
+		if (string.IsNullOrEmpty(currentSmsc))
+		{
+			// SIM chưa có SMSC -> tự nhận diện nhà mạng qua mã 452-xx và set SMSC tương ứng
+			string autoSmsc = DetectSmscByNetwork(_myImei);
+			if (autoSmsc != null)
+			{
+				SerialPort1.Write($"AT+CSCA=\"{autoSmsc}\"\r\n");
+				System.Threading.Thread.Sleep(300);
+			}
+			else
+			{
+				MessageBox.Show("Không tự nhận diện được nhà mạng để set SMSC.\r\nAnh vào chế độ AT Command, gửi lệnh: AT+CSCA=\"số SMSC nhà mạng\" trước khi PING.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			}
+		}
+		// Nếu SIM đã có SMSC sẵn (currentSmsc khác rỗng) thì giữ nguyên, không ghi đè
+
 		SerialPort1.Write("AT+CNMI=1,0,0,1,0\r\n");
 		System.Threading.Thread.Sleep(200);
 		SerialPort1.Write("AT+CLIP=1\r\n");
 		txtTarget.Focus();
+		_flagCheckImei = false;
 		SetConnected(true);
 	}
 
