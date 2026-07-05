@@ -18,13 +18,13 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore VTV_SMS_Ping.csproj
+        run: dotnet restore SmsPing.csproj
 
       - name: Build Release
-        run: dotnet build VTV_SMS_Ping.csproj -c Release
+        run: dotnet build SmsPing.csproj -c Release
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
-          name: VTV_SMS_Ping-exe
+          name: SmsPing-exe
           path: bin/Release/net48/**
