@@ -1,10 +1,10 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("VTV_SMS_Ping")]
-[assembly: AssemblyDescription("VTV SMS Ping - bản viết lại gọn từ mã gốc")]
+[assembly: AssemblyTitle("SmsPing")]
+[assembly: AssemblyDescription("SmsPing - bản viết lại gọn từ mã gốc")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("VTV_SMS_Ping")]
+[assembly: AssemblyProduct("SmsPing")]
 [assembly: AssemblyCopyright("Copyright © 2026")]
 [assembly: ComVisible(false)]
 [assembly: AssemblyFileVersion("2.0.0.0")]

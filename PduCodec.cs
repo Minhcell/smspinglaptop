@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace VTV_SMS_Ping;
+namespace SmsPing;
 
 /// <summary>
 /// Mã hóa/giải mã PDU dùng cho tính năng PING SMS.

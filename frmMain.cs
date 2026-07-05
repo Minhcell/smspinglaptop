@@ -5,7 +5,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace VTV_SMS_Ping;
+namespace SmsPing;
 
 public partial class frmMain : Form
 {
@@ -151,6 +151,11 @@ public partial class frmMain : Form
 
 		SerialPort1.Write("AT+CNMP=38\r\n");
 		System.Threading.Thread.Sleep(300);
+		Application.DoEvents();
+
+		// Dọn sạch bộ nhớ SMS/report cũ trên SIM, tránh lỗi "Memory full" sau nhiều lần PING
+		SerialPort1.Write("AT+CMGD=1,4\r\n");
+		System.Threading.Thread.Sleep(1000);
 		Application.DoEvents();
 
 		// Kiểm tra SIM đã có sẵn SMSC chưa (mỗi SIM nhà mạng thường tự lưu sẵn số này)
@@ -362,7 +367,7 @@ public partial class frmMain : Form
 		}
 		else
 		{
-			MessageBox.Show("Đã xảy ra lỗi nào đó, hãy ghi lại thông tin trong RAW CODE và báo với VTV", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			MessageBox.Show("Đã xảy ra lỗi nào đó, hãy ghi lại thông tin trong RAW CODE và báo lại cho tác giả", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			_canBao.RemoveAt(_canBao.Count - 1);
 		}
 	}
@@ -529,12 +534,23 @@ public partial class frmMain : Form
 		MessageBox.Show("- Bạn có thể PING cho một hoặc nhiều số ĐT đang tắt máy.\r\n" +
 			"Thiết bị sẽ SMS báo cho bạn khi SĐT đó online trở lại.\r\n" +
 			"- Trong khi chờ SMS báo hiệu, không được tắt PC/ứng dụng, không để PC sleep.\r\n" +
-			"- Trong khi chờ, vẫn có thể PING SĐT khác hoặc dùng AT command bình thường.", "Trợ giúp");
+			"- Trong khi chờ, vẫn có thể PING SĐT khác hoặc dùng AT command bình thường.\r\n" +
+			"- App tự nhận diện SMSC cho Viettel/Vinaphone/Mobifone khi Connect. Nếu đổi sang SIM mạng khác báo lỗi SMSC, vào chế độ AT Command và set tay theo bảng dưới:\r\n\r\n" +
+			"--- LỆNH SET SMSC THEO NHÀ MẠNG ---\r\n" +
+			"Viettel:              AT+CSCA=\"+84980200030\"\r\n" +
+			"Vinaphone:            AT+CSCA=\"+8491020005\"\r\n" +
+			"Mobifone (miền Bắc):  AT+CSCA=\"+84900000011\"\r\n" +
+			"Mobifone (miền Trung):AT+CSCA=\"+84900000017\"\r\n" +
+			"Mobifone (miền Nam):  AT+CSCA=\"+84900000023\"\r\n" +
+			"Vietnamobile:         AT+CSCA=\"+84925252525\"\r\n" +
+			"Gmobile:              AT+CSCA=\"+84995252525\"\r\n\r\n" +
+			"- Nếu gặp lỗi 'Memory full', gửi lệnh AT+CMGD=1,4 để dọn bộ nhớ SIM.",
+			"Trợ giúp");
 	}
 
 	private void btnAbout_Click(object sender, EventArgs e)
 	{
-		MessageBox.Show("Thiết bị do VTV và PTH thực hiện.\r\nPhiên bản viết lại gọn từ mã gốc.", "About");
+		MessageBox.Show("Thiết bị do tác giả và PTH thực hiện.\r\nPhiên bản viết lại gọn từ mã gốc.", "About");
 	}
 
 	protected override void OnFormClosing(FormClosingEventArgs e)

@@ -3,7 +3,7 @@ using System.Drawing;
 using System.IO.Ports;
 using System.Windows.Forms;
 
-namespace VTV_SMS_Ping;
+namespace SmsPing;
 
 public partial class frmMain
 {
@@ -159,7 +159,7 @@ public partial class frmMain
 		FormBorderStyle = FormBorderStyle.FixedSingle;
 		MaximizeBox = false;
 		StartPosition = FormStartPosition.CenterScreen;
-		Text = "VTV SMS Ping - Ver LTE (rewrite)";
+		Text = "SmsPing - Ver LTE";
 		BackColor = Color.FromArgb(244, 246, 248);
 		try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { /* bỏ qua nếu không lấy được */ }
 

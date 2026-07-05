@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace VTV_SMS_Ping;
+namespace SmsPing;
 
 internal static class Program
 {

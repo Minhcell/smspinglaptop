@@ -1,4 +1,4 @@
-namespace VTV_SMS_Ping;
+namespace SmsPing;
 
 /// <summary>Kết quả decode một bản tin report (CDS) trả về từ SMSC.</summary>
 internal struct KETQUA

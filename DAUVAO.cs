@@ -1,4 +1,4 @@
-namespace VTV_SMS_Ping;
+namespace SmsPing;
 
 /// <summary>Thông tin một yêu cầu PING đang chờ kết quả báo về.</summary>
 internal struct DAUVAO
