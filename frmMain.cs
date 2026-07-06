@@ -339,7 +339,13 @@ public partial class frmMain : Form
 
 		if (pos < 0)
 		{
+			if (_pingOk < 5)
+			{
+				TimerPingOk.Enabled = true; // chưa đủ dữ liệu, thử lại sau 1.5 giây
+				return;
+			}
 			MessageBox.Show("Đã xảy ra lỗi, chưa PING được", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			_canBao.RemoveAt(_canBao.Count - 1);
 			return;
 		}
 
