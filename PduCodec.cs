@@ -77,8 +77,15 @@ internal static class PduCodec
 	private static string Hx(string s, int i) => "" + s[i] + s[i + 1];
 
 	/// <summary>Giải mã bản tin report (CDS). Port 1-1 từ hàm Decode() gốc.</summary>
-	public static KETQUA Decode(string textCode)
+	public static KETQUA Decode(string textCodeInput)
 	{
+		// Rất hay gặp: người dùng bôi đen text bị hụt mất byte "00" (SMSC length) ở đầu chuỗi.
+		// Nếu chuỗi bắt đầu ngay bằng PDU-type "06"/"07", tự động bù lại "00" để không lệch phép tính.
+		string textCode = textCodeInput;
+		if (textCode != null && (textCode.StartsWith("06") || textCode.StartsWith("07")))
+		{
+			textCode = "00" + textCode;
+		}
 		KETQUA r = default;
 		switch (textCode?.Length ?? 0)
 		{
