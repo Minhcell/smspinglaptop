@@ -22,10 +22,7 @@ public partial class frmMain
 	private Panel panelPing;
 	private Label lblTarget;
 	private TextBox txtTarget;
-	private CheckBox ckbBao;
-	private TextBox txtNotify;
 	private Button btnSend;
-	private Button btnXoaBao;
 
 	private Panel panelAt;
 	private Label lblAt;
@@ -49,8 +46,6 @@ public partial class frmMain
 
 	private SerialPort SerialPort1;
 	private Timer TimerConnect;
-	private Timer TimerPingOk;
-	private Timer TimerChoKq;
 
 	protected override void Dispose(bool disposing)
 	{
@@ -66,10 +61,6 @@ public partial class frmMain
 
 		TimerConnect = new Timer(components) { Interval = 500 };
 		TimerConnect.Tick += TimerConnect_Tick;
-		TimerPingOk = new Timer(components) { Interval = 1500 };
-		TimerPingOk.Tick += TimerPingOk_Tick;
-		TimerChoKq = new Timer(components) { Interval = 5000 };
-		TimerChoKq.Tick += TimerChoKq_Tick;
 
 		Font baseFont = new Font("Segoe UI", 9F);
 		Color accent = Color.FromArgb(21, 101, 192);
@@ -102,17 +93,12 @@ public partial class frmMain
 		grpMode.Controls.AddRange(new Control[] { rbPing, rbAt });
 
 		// ---- Panel PING SMS ----
-		panelPing = new Panel { Location = new Point(16, 172), Size = new Size(660, 130), BackColor = panelBg, BorderStyle = BorderStyle.FixedSingle };
+		panelPing = new Panel { Location = new Point(16, 172), Size = new Size(660, 80), BackColor = panelBg, BorderStyle = BorderStyle.FixedSingle };
 		lblTarget = new Label { Text = "SĐT cần PING:", Location = new Point(12, 14), AutoSize = true };
 		txtTarget = new TextBox { Location = new Point(12, 34), Size = new Size(160, 24), MaxLength = 10, Text = "0" };
-		ckbBao = new CheckBox { Text = "Có yêu cầu báo khi SĐT online lại", Location = new Point(12, 68), AutoSize = true };
-		ckbBao.CheckedChanged += ckbBao_CheckedChanged;
-		txtNotify = new TextBox { Location = new Point(12, 92), Size = new Size(160, 24), MaxLength = 10, Text = "0", Enabled = false };
 		btnSend = new Button { Text = "GỬI PING", Location = new Point(200, 34), Size = new Size(110, 30), FlatStyle = FlatStyle.Flat, BackColor = accent, ForeColor = Color.White };
 		btnSend.Click += btnSend_Click;
-		btnXoaBao = new Button { Text = "Xoá mọi yêu cầu báo", Location = new Point(200, 82), Size = new Size(150, 28), FlatStyle = FlatStyle.Flat };
-		btnXoaBao.Click += btnXoaBao_Click;
-		panelPing.Controls.AddRange(new Control[] { lblTarget, txtTarget, ckbBao, txtNotify, btnSend, btnXoaBao });
+		panelPing.Controls.AddRange(new Control[] { lblTarget, txtTarget, btnSend });
 
 		// ---- Panel AT Command ----
 		panelAt = new Panel { Location = new Point(16, 172), Size = new Size(660, 130), BackColor = panelBg, BorderStyle = BorderStyle.FixedSingle, Visible = false };
@@ -126,17 +112,17 @@ public partial class frmMain
 		panelAt.Controls.AddRange(new Control[] { lblAt, txtAt, ckbCr, btnSendAt, btnCtrlZ });
 
 		// ---- RAW CODE ----
-		grpRaw = new GroupBox { Text = "RAW CODE", Location = new Point(16, 312), Size = new Size(324, 220), ForeColor = accent, Font = baseFont };
+		grpRaw = new GroupBox { Text = "RAW CODE", Location = new Point(16, 262), Size = new Size(324, 220), ForeColor = accent, Font = baseFont };
 		txtRaw = new TextBox { Location = new Point(10, 24), Size = new Size(300, 184), Multiline = true, ScrollBars = ScrollBars.Vertical, ReadOnly = true, Font = new Font("Consolas", 8.5F) };
 		grpRaw.Controls.Add(txtRaw);
 
 		// ---- DECODE ----
-		grpDecode = new GroupBox { Text = "DECODE (bôi đen đoạn REPORT trong RAW CODE rồi bấm DECODE)", Location = new Point(352, 312), Size = new Size(324, 220), ForeColor = accent, Font = baseFont };
+		grpDecode = new GroupBox { Text = "DECODE (bôi đen đoạn REPORT trong RAW CODE rồi bấm DECODE)", Location = new Point(352, 262), Size = new Size(324, 220), ForeColor = accent, Font = baseFont };
 		txtDecode = new TextBox { Location = new Point(10, 24), Size = new Size(300, 184), Multiline = true, ScrollBars = ScrollBars.Vertical, ReadOnly = true, Font = new Font("Consolas", 8.5F) };
 		grpDecode.Controls.Add(txtDecode);
 
 		// ---- TOOL ----
-		grpTool = new GroupBox { Text = "Tool", Location = new Point(16, 542), Size = new Size(660, 96), ForeColor = accent, Font = baseFont };
+		grpTool = new GroupBox { Text = "Tool", Location = new Point(16, 492), Size = new Size(660, 96), ForeColor = accent, Font = baseFont };
 		btn_chkHard = new Button { Text = "Check Hardware", Location = new Point(12, 24), Size = new Size(120, 28), FlatStyle = FlatStyle.Flat };
 		btn_chkHard.Click += btn_chkHard_Click;
 		btn_TK = new Button { Text = "Check TK SIM", Location = new Point(140, 24), Size = new Size(120, 28), FlatStyle = FlatStyle.Flat };
@@ -154,7 +140,7 @@ public partial class frmMain
 		// ---- Form ----
 		AutoScaleDimensions = new SizeF(96F, 96F);
 		AutoScaleMode = AutoScaleMode.Dpi;
-		ClientSize = new Size(692, 650);
+		ClientSize = new Size(692, 600);
 		Font = baseFont;
 		FormBorderStyle = FormBorderStyle.FixedSingle;
 		MaximizeBox = false;
