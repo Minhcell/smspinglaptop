@@ -19,9 +19,6 @@ public partial class frmMain : Form
 
 	private string _myImei = "";
 	private bool _flagCheckImei;
-	private string _strDocKq = "";
-	private readonly List<DAUVAO> _canBao = new List<DAUVAO>();
-	private int _pingOk;
 
 	public frmMain()
 	{
@@ -259,7 +256,6 @@ public partial class frmMain : Form
 	private void ReceivedText(string text)
 	{
 		txtRaw.AppendText(text);
-		if (_canBao.Count > 0) _strDocKq += text;
 		if (_flagCheckImei) _myImei += text;
 	}
 
@@ -294,157 +290,7 @@ public partial class frmMain : Form
 			return;
 		}
 
-		if (!ckbBao.Checked)
-		{
-			SendPdu(PduCodec.BuildPingPdu(sdt));
-			return;
-		}
-
-		string notify = txtNotify.Text;
-		if (!ValidPhone(notify))
-		{
-			MessageBox.Show("Kiểm tra lại định dạng SĐT của bạn (10 số, bắt đầu bằng 0)", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-			return;
-		}
-		if (sdt == notify)
-		{
-			MessageBox.Show("SĐT cần PING trùng SĐT nhận báo. Nhập lại.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-			return;
-		}
-
-		var entry = new DAUVAO
-		{
-			str_CMGS = "",
-			sdt_canPING = sdt,
-			sdt_canPING_dao = PduCodec.SwapDigits(sdt),
-			sdt_trs = "+84" + notify.Substring(1)
-		};
-		_canBao.Add(entry);
-		_strDocKq = "";
 		SendPdu(PduCodec.BuildPingPdu(sdt));
-		System.Threading.Thread.Sleep(500);
-		_pingOk = 0;
-		ckbBao.Checked = false;
-		TimerPingOk.Enabled = true;
-	}
-
-	private void TimerPingOk_Tick(object sender, EventArgs e)
-	{
-		TimerPingOk.Enabled = false;
-		if (_canBao.Count == 0) return;
-		_pingOk++;
-		var last = _canBao[_canBao.Count - 1];
-		string marker = "00B1000B9148" + last.sdt_canPING_dao + "4000AA03201008";
-		int pos = _strDocKq.IndexOf(marker, StringComparison.Ordinal);
-
-		if (pos < 0)
-		{
-			if (_pingOk < 5)
-			{
-				TimerPingOk.Enabled = true; // chưa đủ dữ liệu, thử lại sau 1.5 giây
-				return;
-			}
-			MessageBox.Show("Đã xảy ra lỗi, chưa PING được", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			_canBao.RemoveAt(_canBao.Count - 1);
-			return;
-		}
-
-		string tail = _strDocKq.Substring(pos);
-		if (tail.Contains("ERROR"))
-		{
-			MessageBox.Show("Cuộc PING của bạn bị lỗi", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			_canBao.RemoveAt(_canBao.Count - 1);
-		}
-		else if (tail.Contains("OK"))
-		{
-			int cmgsIdx = _strDocKq.IndexOf("CMGS: ", StringComparison.Ordinal);
-			if (cmgsIdx >= 0)
-			{
-				int endIdx = _strDocKq.IndexOf("\r\n", cmgsIdx, StringComparison.Ordinal);
-				if (endIdx < 0) endIdx = _strDocKq.Length;
-				last.str_CMGS = _strDocKq.Substring(cmgsIdx + 6, endIdx - cmgsIdx - 6);
-				_canBao[_canBao.Count - 1] = last;
-			}
-			TimerChoKq.Enabled = true;
-		}
-		else if (_pingOk < 5)
-		{
-			TimerPingOk.Enabled = true;
-		}
-		else
-		{
-			MessageBox.Show("Đã xảy ra lỗi nào đó, hãy ghi lại thông tin trong RAW CODE và báo lại cho tác giả", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			_canBao.RemoveAt(_canBao.Count - 1);
-		}
-	}
-
-	private void TimerChoKq_Tick(object sender, EventArgs e)
-	{
-		if (_canBao.Count == 0)
-		{
-			TimerChoKq.Enabled = false;
-			return;
-		}
-		TimerChoKq.Stop();
-
-		if (_strDocKq.Length > 0)
-		{
-			string catKetQua = "";
-			int cdsIdx = _strDocKq.IndexOf("CDS:", StringComparison.Ordinal);
-			if (cdsIdx >= 0)
-			{
-				int i06 = _strDocKq.IndexOf("069148", cdsIdx, StringComparison.Ordinal);
-				int i07 = _strDocKq.IndexOf("079148", cdsIdx, StringComparison.Ordinal);
-				if (i06 >= 0) catKetQua = _strDocKq.Substring(i06, Math.Min(64, _strDocKq.Length - i06));
-				else if (i07 >= 0) catKetQua = _strDocKq.Substring(i07, Math.Min(66, _strDocKq.Length - i07));
-			}
-
-			var kq = PduCodec.Decode(catKetQua);
-			if (kq.ER)
-			{
-				var match = _canBao.FirstOrDefault(x => x.str_CMGS == kq.MR);
-				if (!string.IsNullOrEmpty(match.str_CMGS))
-				{
-					SerialPort1.Write("AT+CMGF=1\r\n");
-					System.Threading.Thread.Sleep(300);
-					SerialPort1.Write($"AT+CMGS=\"{match.sdt_trs}\"\r\n");
-					System.Threading.Thread.Sleep(1000);
-					SerialPort1.Write($"PING CMGS: {match.str_CMGS}; Den {match.sdt_canPING}; SMSC nhan: {kq.t_ping}; Phat: {kq.t_report}; ket qua: {kq.kq_sms}");
-					System.Threading.Thread.Sleep(1000);
-					SerialPort1.Write("\u001a");
-					System.Threading.Thread.Sleep(3000);
-					_canBao.RemoveAll(x => x.sdt_canPING == match.sdt_canPING && x.str_CMGS == match.str_CMGS);
-					System.Threading.Thread.Sleep(5000);
-					SerialPort1.Write("AT+CMGF=0\r\n");
-					System.Threading.Thread.Sleep(300);
-				}
-				else
-				{
-					_strDocKq = "";
-				}
-			}
-			else
-			{
-				_strDocKq = "";
-			}
-		}
-
-		if (_canBao.Count > 0) TimerChoKq.Start();
-	}
-
-	private void btnXoaBao_Click(object sender, EventArgs e)
-	{
-		_canBao.Clear();
-		TimerPingOk.Enabled = false;
-		TimerChoKq.Enabled = false;
-		ckbBao.Checked = false;
-		txtNotify.Text = "";
-		_strDocKq = "";
-	}
-
-	private void ckbBao_CheckedChanged(object sender, EventArgs e)
-	{
-		txtNotify.Enabled = ckbBao.Checked;
 	}
 
 	// ---------------- Chế độ AT command ----------------
